@@ -175,6 +175,13 @@ border-radius: 5px;</string>
             </widget>
            </item>
            <item>
+            <widget class="QPushButton" name="loadFolderButton">
+             <property name="text">
+              <string>load</string>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QPushButton" name="settingsPushButton">
              <property name="text">
               <string/>
@@ -239,51 +246,8 @@ border-radius: 5px;</string>
               </rect>
              </property>
              <layout class="QGridLayout" name="gridLayout">
-              <item row="2" column="0">
-               <widget class="QLabel" name="label_2">
-                <property name="minimumSize">
-                 <size>
-                  <width>200</width>
-                  <height>200</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>200</width>
-                  <height>200</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">background-color: rgb(45, 49, 48);
-border-radius: 5px;</string>
-                </property>
-                <property name="text">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;img src=&quot;:/icons/images/icons8-album-48.png&quot;/&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;Song Name:&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;Artist Name: &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QLabel" name="label_10">
-                <property name="minimumSize">
-                 <size>
-                  <width>200</width>
-                  <height>200</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>200</width>
-                  <height>200</height>
-                 </size>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">background-color: rgb(45, 49, 48);
-border-radius: 5px;</string>
-                </property>
-                <property name="text">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;img src=&quot;:/icons/images/icons8-album-48.png&quot;/&gt;&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;Song Name:&lt;/p&gt;&lt;p align=&quot;center&quot;&gt;Artist Name: &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                </property>
-               </widget>
+              <item row="0" column="0">
+               <widget class="QWidget" name="scrollAreaWidgetContents_5" native="true"/>
               </item>
              </layout>
             </widget>
