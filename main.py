@@ -1,14 +1,66 @@
 import os
 import sys
+# noinspection PyUnresolvedReferences
 import resources_rc
 from PyQt5.QtCore import QUrl, QDir, pyqtSignal, Qt, QTime
 from PyQt5.QtGui import QIcon, QPixmap, QImage
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
-from PyQt5.QtWidgets import QLabel, QMainWindow, QGridLayout, QApplication, QFileDialog, QFrame, QVBoxLayout
+from PyQt5.QtWidgets import QLabel, QMainWindow, QGridLayout, QApplication, QFileDialog, QFrame, QVBoxLayout, QSlider, \
+    QDialog
 from PyQt5.uic import loadUi
 from mutagen import File
 from mutagen.flac import FLAC
 from mutagen.id3 import ID3
+
+
+def change_volume(value):
+    pass
+
+
+class VolumeSliderDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowFlags(Qt.Popup | Qt.FramelessWindowHint)  # Make it look like a popup
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setFixedSize(50, 150)  # Adjust the size of the popup slider
+
+        layout = QVBoxLayout(self)
+
+        # Create a vertical slider for volume control
+        self.slider = QSlider(Qt.Vertical)
+        self.slider.setRange(0, 100)
+        self.slider.setValue(50)  # Set default volume to 50
+        self.slider.setStyleSheet("""
+            QSlider::groove:vertical {
+                background: #ddd;
+                width: 8px;
+                border-radius: 4px;
+            }
+            QSlider::handle:vertical {
+                background: #0d6efd;
+                border: 1px solid #0a58ca;
+                height: 20px;
+                width: 20px;
+                margin: -5px;
+                border-radius: 10px;
+            }
+            QSlider::add-page:vertical {
+                background: #ddd;
+            }
+            QSlider::sub-page:vertical {
+                background: #0d6efd;
+            }
+        """)
+
+        layout.addWidget(self.slider)
+        self.setLayout(layout)
+
+        # Connect slider value change to volume adjustment
+        self.slider.valueChanged.connect(change_volume)
+
+    def show_at_position(self, pos):
+        self.move(pos)
+        self.show()
 
 
 class ClickableLabel(QLabel):
@@ -20,7 +72,14 @@ class ClickableLabel(QLabel):
         super().mousePressEvent(event)
 
 
+def on_click():
+    # Handle click event
+    print("StyledLabel clicked")
+
+
 class StyledLabel(QFrame):
+    clicked = pyqtSignal(str)  # Signal that emits the file path when clicked
+
     def __init__(self, parent=None):
         super(StyledLabel, self).__init__(parent)
         self.setFixedSize(200, 200)
@@ -61,11 +120,8 @@ class StyledLabel(QFrame):
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
-            self.on_click()
-
-    def on_click(self):
-        # Handle click event
-        print("StyledLabel clicked")
+            file_path = self.property('file_path')
+            self.clicked.emit(file_path)  # Emit signal with file path
 
     def set_cover(self, imgpath):
         try:
@@ -96,13 +152,16 @@ def extract_album_art(file_path):
             for tag in audio_file.pictures:
                 image_data = tag.data
                 break
+
         if image_data:
             image = QImage.fromData(image_data)
             if not image.isNull():
                 return QPixmap(image)
     except Exception as e:
         print(f"Error extracting album art: {e}")
-    return None
+
+    # Return a default image if no album art is found
+    return QPixmap(":/icons/images/icons8-album-48.png")
 
 
 class MainWindow(QMainWindow):
@@ -136,6 +195,26 @@ class MainWindow(QMainWindow):
 
         # Connect slider to allow seeking in the song
         self.musicSlider.sliderMoved.connect(self.set_position)
+
+        self.volumeButton.clicked.connect(self.show_volume_slider)
+
+        # Create the volume slider popup dialog (hidden by default)
+        self.volumeSliderDialog = VolumeSliderDialog(self)
+
+    def show_volume_slider(self):
+        # Get the button's position and calculate the position for the slider
+        button_pos = self.volumeButton.mapToGlobal(self.volumeButton.rect().bottomRight())
+        slider_pos = button_pos - self.volumeSliderDialog.rect().bottomRight()
+
+        # Show the slider at the calculated position
+        self.volumeSliderDialog.show_at_position(slider_pos)
+
+        # Connect the volume slider's valueChanged signal to the media player volume
+        self.volumeSliderDialog.slider.valueChanged.connect(self.adjust_volume)
+
+    def adjust_volume(self, value):
+        """ Adjust the media player volume based on the slider value """
+        self.mediaPlayer.setVolume(value)  # Set the media player volume
 
     def switch_to_home_page(self):
         self.stackedWidget.setCurrentIndex(0)
@@ -209,8 +288,11 @@ class MainWindow(QMainWindow):
             song_label.set_title(song_title)
             song_label.set_artist(artist_name)
 
+            # Set the file path as a property
             song_label.setProperty('file_path', file_path)
-            song_label.on_click = lambda: self.song_label_clicked(file_path)
+
+            # Connect the label's clicked signal to song_label_clicked method
+            song_label.clicked.connect(self.song_label_clicked)
 
             self.gridLayout.addWidget(song_label, row, col)
         except Exception as e:
@@ -246,8 +328,15 @@ class MainWindow(QMainWindow):
         else:
             song_title = os.path.basename(file_path)
             artist_name = "Unknown Artist"
+
         self.labelSongName.setText(song_title)
         self.labelArtist.setText(artist_name)
+
+        # Extract album art and set it as the button icon
+        album_art = extract_album_art(file_path)
+        if album_art:
+            self.albumButton.setIcon(QIcon(album_art))
+            self.albumButton.setIconSize(self.albumButton.size())  # Set icon size to match the button size
 
     def update_position(self, position):
         """
